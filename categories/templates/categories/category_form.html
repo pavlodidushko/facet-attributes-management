@@ -1,0 +1,41 @@
+{% extends 'categories/base.html' %}
+
+{% block content %}
+    <h1>{% if object %}Edit{% else %}Add{% endif %} Category</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.name.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.parent.id_for_label }}" class="form-label">Parent Category</label>
+                    {{ form.parent }}
+                    {% if form.parent.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.parent.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                    {% if not form.parent.value and object and object.parent %}
+                        <div class="form-text">Current parent: {{ object.parent.name }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-end">
+            <a href="{% if object %}{% url 'category_detail' pk=object.pk %}{% else %}{% url 'category_list' %}{% endif %}" 
+               class="btn btn-outline-secondary me-2">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </form>
+{% endblock %}

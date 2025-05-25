@@ -1,0 +1,61 @@
+{% extends 'categories/base.html' %}
+
+{% block content %}
+    <h1>Attributes</h1>
+    <a href="{% url 'attribute_add' %}" class="btn btn-primary mb-3">Add Attribute</a>
+    
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Categories</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attribute in attributes %}
+                        <tr>
+                            <td>{{ attribute.name }}</td>
+                            <td>
+                                {% for category in attribute.categories.all %}
+                                    <span class="badge bg-secondary">{{ category.name }}</span>
+                                {% empty %}
+                                    <span class="text-muted">No categories</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <a href="{% url 'attribute_edit' pk=attribute.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                <a href="{% url 'attribute_delete' pk=attribute.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-muted">No attributes defined yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if is_paginated %}
+                <div class="pagination">
+                    <span class="step-links">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1">&laquo; first</a>
+                            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                        {% endif %}
+
+                        <span class="current">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                        </span>
+
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}">next</a>
+                            <a href="?page={{ paginator.num_pages }}">last &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

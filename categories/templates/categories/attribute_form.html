@@ -1,0 +1,19 @@
+{% extends 'categories/base.html' %}
+
+{% block content %}
+    <h1>{% if object %}Edit{% else %}Add{% endif %} Attribute</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="card mb-3">
+            <div class="card-body">
+                {{ form.as_p }}
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-end">
+            <a href="{% if object %}{% url 'attribute_detail' pk=object.pk %}{% else %}{% url 'attribute_list' %}{% endif %}" class="btn btn-outline-secondary me-2">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </form>
+{% endblock %}

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Facet Attribute Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></link>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" />
+    <style type="text/css">
+        .invalid-feedback {
+            display: none;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: #dc3545;
+        }
+        .d-block {
+            display: block!important;
+        }
+        /* Style for tree select in forms */
+        .form-select option {
+            padding-left: calc(var(--depth) * 20px);
+        }
+
+        /* Category Tree Styling */
+        .category-node {
+            transition: background-color 0.2s;
+        }
+
+        .category-node:hover {
+            background-color: #f8f9fa;
+        }
+
+        .category-node.bg-light {
+            background-color: #e9ecef !important;
+        }
+
+        .toggle-icon {
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .children-container {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        /* Attribute List Styling */
+        .list-group-item {
+            transition: background-color 0.2s;
+        }
+
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{% url 'category_list' %}">Facet Manager</a>
+                <div class="navbar-nav">
+                    <a class="nav-link" href="{% url 'category_list' %}">Categories</a>
+                    <a class="nav-link" href="{% url 'attribute_list' %}">Attributes</a>
+                </div>
+            </div>
+        </nav>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add Bootstrap's is-invalid class to fields with errors
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                const inputs = form.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    if (input.classList.contains('is-invalid')) {
+                        const errorDiv = input.nextElementSibling;
+                        if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                            errorDiv.classList.add('d-block');
+                        }
+                    }
+                });
+            });
+        });
+
+        
+    </script>
+
+    {% block extra_css %}{% endblock %}
+    
+    {% block extra_js %}{% endblock %}
+    
+</body>
+</html>

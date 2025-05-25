@@ -1,0 +1,692 @@
+{% extends 'categories/base.html' %}
+
+{% block content %}
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <h3 class="card-title">Categories</h3>
+                        <div>
+                            <button id="create-category-btn" class="btn btn-sm btn-success">
+                                <i class="bi bi-plus"></i> Add Root Category
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="category-tree"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h3 class="card-title float-start">Attributes</h3>
+                        <button class="btn btn-sm btn-primary mb-2 float-end" id="add-new-attribute-btn">
+                            <i class="bi bi-plus"></i> Add New Attribute
+                        </button>
+                    </div>
+                    <div class="card-body" id="attribute-management">
+                        <p class="text-muted">Select a category to manage its attributes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Category Modal -->
+        <div class="modal fade" id="createCategoryModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create New Category</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="createCategoryForm">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="categoryName" class="form-label">Category Name</label>
+                                <input type="text" class="form-control" id="categoryName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="parentCategory" class="form-label">Parent Category</label>
+                                <select class="form-select" id="parentCategory" disabled>
+                                    <option value="">-- Parent Category --</option>
+                                    
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Category Modal -->
+        <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Category</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="editCategoryForm">
+                        {% csrf_token %}
+                        <input type="hidden" id="editCategoryId">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="editCategoryName" class="form-label">Category Name</label>
+                                <input type="text" class="form-control" id="editCategoryName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editParentCategory" class="form-label">Parent Category</label>
+                                <input type="text" class="form-control" id="editParentCategory" 
+                                    placeholder="Start typing to search categories...">
+                                <input type="hidden" id="editParentCategoryId">
+                                <div class="form-text">Leave blank to make this a root category</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Attribute Modal -->
+        <div class="modal fade" id="createAttributeModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create New Attribute</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="createAttributeForm">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="attributeName" class="form-label">Attribute Name</label>
+                                <input type="text" class="form-control" id="attributeName" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Create & Assign</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <style>
+        /* Autocomplete styling */
+        .ui-autocomplete {
+            position: absolute;
+            z-index: 1061 !important; /* Above modal */
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            padding: 0;
+        }
+
+        .ui-autocomplete .ui-menu-item {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+
+        .ui-autocomplete .ui-menu-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .ui-autocomplete .ui-state-active {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+        
+        /* Attribute sync indicators */
+        .jstree-icon.attribute-sync {
+            color: #0d6efd;
+            margin-right: 5px;
+        }
+
+        /* Badge styling */
+        .jstree-anchor .badge {
+            font-size: 0.7em;
+            vertical-align: middle;
+        }
+
+        /* Visual hierarchy indicators */
+        .jstree-node {
+            position: relative;
+        }
+
+        .jstree-node::before {
+            content: "";
+            position: absolute;
+            left: -18px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #dee2e6;
+        }
+
+        .jstree-node:last-child::before {
+            height: 24px;
+        }
+
+        /* Modal styling */
+        #createCategoryModal .modal-body {
+            padding: 1.5rem;
+        }
+
+        #createCategoryModal .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        #createCategoryModal .form-control,
+        #createCategoryModal .form-select {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+        }
+
+        .bg-error {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- jQuery (required for jstree) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+
+    <!-- jstree CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
+
+    <!-- jstree JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize jstree
+            $('#category-tree').jstree({
+                'core': {
+                    'data': {
+                        'url': '/api/categories/tree/',
+                        'data': function(node) {
+                            return { 'id': node.id === '#' ? '' : node.id };
+                        }
+                    },
+                    'themes': {
+                        'responsive': true,
+                        'variant': 'large'
+                    }
+                },
+                'types': {
+                    'default': {
+                        'icon': 'bi bi-folder'
+                    }
+                },
+                'plugins': ['types', 'contextmenu'],
+                'contextmenu': {
+                    'items': function(node) {
+                        return {
+                            'create': {
+                                'label': 'Create Subcategory',
+                                'icon': 'bi bi-plus',
+                                'action': function(data) {
+                                    const inst = $.jstree.reference(data.reference);
+                                    const parentNode = inst.get_node(data.reference);
+                                    
+                                    // Show modal with parent pre-selected
+                                    $('#parentCategory').removeAttr('disabled');
+                                    $('#parentCategory').html('<option value="' + parentNode.id + '">' + parentNode.text + '</option')
+                                    $('#parentCategory').val(parentNode.id);
+                                    $('#createCategoryModal').modal('show');
+                                }
+                            },
+                            'edit': {
+                                'label': 'Edit Category',
+                                'icon': 'bi bi-pencil',
+                                'action': function(data) {
+                                    const inst = $.jstree.reference(data.reference);
+                                    const categoryNode = inst.get_node(data.reference);
+                                    const categoryId = categoryNode.id;
+
+                                    // Initialize modal fields
+                                    $('#editCategoryId').val(categoryId);
+                                    $('#editCategoryName').val(categoryNode.text);
+                                    $('#editParentCategory').val('');
+                                    $('#editParentCategoryId').val('');
+                                    
+                                    // Set current parent if exists
+                                    if (categoryNode.parent !== '#') {
+                                        const parentNode = $('#category-tree').jstree('get_node', categoryNode.parent);
+                                        $('#editParentCategory').val(parentNode.text);
+                                        $('#editParentCategoryId').val(parentNode.id);
+                                    }
+                                    
+                                    // Show modal and initialize autocomplete
+                                    $('#editCategoryModal').modal('show').on('shown.bs.modal', function() {
+                                        initCategoryAutocomplete('#editParentCategory', categoryId);
+                                    });
+                                }
+                            },
+                            'delete': {
+                                'label': 'Delete Category',
+                                'separator_before': true,
+                                'icon': 'bi bi-trash text-danger',
+                                'action': function(data) {
+                                    const inst = $.jstree.reference(data.reference);
+                                    const categoryNode = inst.get_node(data.reference);
+                                    const categoryId = categoryNode.id;
+                                    if (confirm('Are you sure you want to delete this category and all its subcategories?')) {
+                                        $.ajax({
+                                            url: `/api/categories/${categoryId}/delete/`,
+                                            method: 'DELETE',
+                                            headers: {
+                                                'X-CSRFToken': getCookie('csrftoken'),
+                                                'X-Requested-With': 'XMLHttpRequest'
+                                            },
+                                            success: function(response) {
+                                                showToast('Category deleted successfully');
+                                                $('#category-tree').jstree('refresh');
+                                            },
+                                            error: function(xhr) {
+                                                showToast('Error: ' + (xhr.responseJSON?.error || 'Failed to delete category'), 'error');
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        };
+                    }
+                }
+            }).on('loaded.jstree', function() {
+                // Add attribute count badges after tree loads
+                /* $(this).find('.jstree-anchor').each(function() {
+                    const node = $('#category-tree').jstree('get_node', this);
+                    if (node.data && node.data.attribute_count > 0) {
+                        $(this).append(
+                            `<span class="badge bg-primary ms-2">${node.data.attribute_count}</span>`
+                        );
+                    }
+                }); */
+            });
+
+            // Handle node selection
+            $('#category-tree').on('changed.jstree', function(e, data) {
+                if (data.selected.length) {
+                    const categoryId = data.selected[0];
+                    loadCategoryAttributes(categoryId);
+                }
+            });
+
+            // Context menu for tree operations
+            $('#category-tree').on('create_node.jstree', function(e, data) {
+                // Handle category creation
+                $.ajax({
+                    url: '/api/categories/',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    data: {
+                        name: data.node.text,
+                        parent: data.node.parent === '#' ? null : data.node.parent,
+                        // csrfmiddlewaretoken: getCookie('csrftoken')
+                    },
+                    success: function(response) {
+                        data.instance.set_id(data.node, response.id);
+                    }
+                });
+            });
+
+            // Initialize create category button
+            $(document).on('click', '#create-category-btn', function() {
+                $('#createCategoryModal').modal('show');
+            });
+
+            // Handle form submission
+            $('#createCategoryForm').submit(function(e) {
+                e.preventDefault();
+                
+                const name = $('#categoryName').val().trim();
+                const parentId = $('#parentCategory').val();
+                
+                if (!name) {
+                    showToast('Category name is required', 'error');
+                    return;
+                }
+                
+                $.ajax({
+                    url: '/api/categories/create/',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    data: {
+                        name: name,
+                        parent_id: parentId || ''
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#createCategoryModal').modal('hide');
+                            showToast(`Category "${response.category.name}" created successfully`);
+                            
+                            // Refresh the tree
+                            $('#category-tree').jstree('refresh');
+                            
+                            // Clear the form
+                            $('#createCategoryForm')[0].reset();
+                            
+                            // If created under a parent, open that parent
+                            if (response.category.parent_id) {
+                                const parentNode = $('#category-tree').jstree('get_node', response.category.parent_id);
+                                $('#category-tree').jstree('open_node', parentNode);
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        showToast('Error: ' + (xhr.responseJSON?.error || 'Failed to create category'), 'error');
+                    }
+                });
+            });
+
+            // Handle form submission
+            $('#editCategoryForm').submit(function(e) {
+                e.preventDefault();
+                
+                const categoryId = $('#editCategoryId').val();
+                const name = $('#editCategoryName').val().trim();
+                const parentId = $('#editParentCategoryId').val() || '';
+                
+                if (!name) {
+                    showToast('Category name is required', 'error');
+                    return;
+                }
+                
+                $.ajax({
+                    url: `/api/categories/${categoryId}/update/`,
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    data: {
+                        name: name,
+                        parent_id: parentId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#editCategoryModal').modal('hide');
+                            showToast(response.message);
+                            $('#category-tree').jstree('refresh');
+                        }
+                    },
+                    error: function(xhr) {
+                        showToast('Error: ' + (xhr.responseJSON?.error || 'Failed to update category'), 'error');
+                    }
+                });
+            });
+
+            // Initialize autocomplete for parent category
+            function initCategoryAutocomplete(inputElement, currentCategoryId) {
+                $(inputElement).autocomplete({
+                    minLength: 2,
+                    source: function(request, response) {
+                        $.get('/api/categories/search/', {
+                            q: request.term,
+                            exclude: currentCategoryId
+                        }, function(data) {
+                            response($.map(data.results, function(item) {
+                                return {
+                                    label: item.path.replace(/__/g, ' → '), // Convert path to visual hierarchy
+                                    value: item.text,
+                                    id: item.id
+                                };
+                            }));
+                        });
+                    },
+                    focus: function(event, ui) {
+                        $(inputElement).val(ui.item.label);
+                        return false;
+                    },
+                    select: function(event, ui) {
+                        $(inputElement).val(ui.item.label);
+                        $('#editParentCategoryId').val(ui.item.id);
+                        return false;
+                    },
+                    open: function() {
+                        $(this).autocomplete('widget').css('z-index', 1061);
+                    }
+                }).autocomplete('instance')._renderItem = function(ul, item) {
+                    return $('<li>')
+                        .append(`<div>${item.label}</div>`)
+                        .appendTo(ul);
+                };
+            }
+
+            // Cleanup when modal closes
+            $('#editCategoryModal').on('hidden.bs.modal', function() {
+                $('#editParentCategory').autocomplete('destroy');
+            });
+
+            // Event delegation for attribute buttons
+            $(document).on('click', '.add-attribute-btn', function() {
+                const categoryId = $('#category-tree').jstree('get_selected')[0];
+                const attributeId = $(this).data('attribute-id');
+                addAttributeToCategory(categoryId, attributeId);
+            });
+
+            $(document).on('click', '.remove-attribute-btn', function() {
+                const categoryId = $('#category-tree').jstree('get_selected')[0];
+                const attributeId = $(this).data('attribute-id');
+                if (confirm('Are you sure you want to remove this attribute from the selected category and all its subcategories?')) {
+                    removeAttributeFromCategory(categoryId, attributeId);
+                }
+            });
+
+            // Open create attribute modal
+            $(document).on('click', '#add-new-attribute-btn', function() {
+                const categoryId = $('#category-tree').jstree('get_selected')[0];
+                if (!categoryId) {
+                    showToast('Please select a category first', 'error');
+                    return;
+                }
+                
+                $('#attributeName').val('');
+                $('#createAttributeModal').modal('show');
+            });
+
+            // Handle create attribute form submission
+            $('#createAttributeForm').submit(function(e) {
+                e.preventDefault();
+                const attributeName = $('#attributeName').val().trim();
+                const categoryId = $('#category-tree').jstree('get_selected')[0];
+                
+                if (!attributeName) {
+                    showToast('Attribute name is required', 'error');
+                    return;
+                }
+                $.ajax({
+                    url: `/api/categories/${categoryId}/add-attribute-by-name/`,
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    data: { name: attributeName },
+                    success: function(response) {
+                        $('#createAttributeModal').modal('hide');
+                        handleAttributeResponse(response, categoryId);
+                    },
+                    error: function(xhr) {
+                        showToast('Error: ' + (xhr.responseJSON?.error || 'Failed to create attribute'), 'error');
+                    }
+                });
+            });
+
+        });
+
+        // Load attributes for selected category
+        function loadCategoryAttributes(categoryId) {
+            $.get(`/api/categories/${categoryId}/attributes/`, function(data) {
+                let html = `
+                    <div class="attribute-management">
+                        <h4>Assigned Attributes</h4>
+                        ${data.attributes.length ? `
+                            <div class="list-group mb-4">
+                                ${data.attributes.map(attr => `
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>${attr.name}</span>
+                                        <button class="btn btn-sm btn-danger remove-attribute-btn" 
+                                                data-attribute-id="${attr.id}">
+                                            <i class="bi bi-dash"></i> Remove
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<div class="alert alert-info">No attributes assigned</div>'}
+                        
+                        <h4>Available Attributes</h4>
+                        ${data.available_attributes.length ? `
+                            <div class="list-group">
+                                ${data.available_attributes.map(attr => `
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>${attr.name}</span>
+                                        <button class="btn btn-sm btn-success add-attribute-btn" 
+                                                data-attribute-id="${attr.id}">
+                                            <i class="bi bi-plus"></i> Add
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<div class="alert alert-info">No available attributes</div>'}
+                    </div>
+                `;
+                $('#attribute-management').html(html);
+            }).fail(function() {
+                $('#attribute-management').html(`
+                    <div class="alert alert-danger">
+                        Failed to load attributes. Please try again.
+                    </div>
+                `);
+            });
+        }
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toast = $(`
+                <div class="toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+            
+            $('body').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+            
+            toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+        
+        // Enhanced attribute management functions
+        function handleAttributeResponse(response, categoryId) {
+            if (response.success) {
+                showToast(response.message);
+                
+                // Refresh the entire tree to reflect changes
+                $('#category-tree').jstree('refresh');
+                
+                // Refresh attribute display for current category
+                const selected = $('#category-tree').jstree('get_selected');
+                if (selected.length && selected[0] == categoryId) {
+                    loadCategoryAttributes(categoryId);
+                }
+            }
+        }
+
+        function addAttributeToCategory(categoryId, attributeId) {
+            $.ajax({
+                url: `/api/categories/${categoryId}/add-attribute/${attributeId}/`,
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+            }).done(function(response) {
+                handleAttributeResponse(response, categoryId);
+            }).fail(function(xhr) {
+                showToast('Error: ' + (xhr.responseJSON?.error || 'Failed to add attribute'), 'error');
+            });
+        }
+
+        function removeAttributeFromCategory(categoryId, attributeId) {
+            $.ajax({
+                url: `/api/categories/${categoryId}/remove-attribute/${attributeId}/`,
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+            }).done(function(response) {
+                handleAttributeResponse(response, categoryId);
+            }).fail(function(xhr) {
+                showToast('Error: ' + (xhr.responseJSON?.error || 'Failed to remove attribute'), 'error');
+            });
+        }
+
+        // Refresh the attribute display after changes
+        function refreshAttributeDisplay(categoryId) {
+            const selected = $('#category-tree').jstree('get_selected');
+            if (selected.length && selected[0] == categoryId) {
+                loadCategoryAttributes(categoryId);
+            }
+        }
+
+    </script>
+{% endblock %}
+

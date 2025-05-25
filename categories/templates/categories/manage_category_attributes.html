@@ -1,0 +1,58 @@
+{% extends 'categories/base.html' %}
+
+{% block content %}
+    <h1>Manage Attributes for {{ category.name }}</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Current Attributes</h2>
+            </div>
+            <div class="card-body">
+                {% if category.attributes.all %}
+                    <div class="list-group">
+                        {% for attribute in category.attributes.all %}
+                            <label class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <input class="form-check-input me-2" type="checkbox" name="attributes" value="{{ attribute.pk }}" checked>
+                                    {{ attribute.name }}
+                                </div>
+                                <a href="{% url 'attribute_edit' pk=attribute.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            </label>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No attributes currently assigned.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if available_attributes %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Available Attributes</h2>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for attribute in available_attributes %}
+                            <label class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <input class="form-check-input me-2" type="checkbox" name="attributes" value="{{ attribute.pk }}">
+                                    {{ attribute.name }}
+                                </div>
+                                <a href="{% url 'attribute_edit' pk=attribute.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <div class="d-flex justify-content-end">
+            <a href="{% url 'category_detail' pk=category.pk %}" class="btn btn-outline-secondary me-2">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
+{% endblock %}

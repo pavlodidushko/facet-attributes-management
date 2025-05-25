@@ -1,0 +1,60 @@
+{% extends 'categories/base.html' %}
+
+{% block content %}
+    <h1>{{ attribute.name }}</h1>
+    
+    <div class="d-flex mb-3">
+        <a href="{% url 'attribute_edit' pk=attribute.pk %}" class="btn btn-secondary me-2">Edit</a>
+        <a href="{% url 'attribute_delete' pk=attribute.pk %}" class="btn btn-danger">Delete</a>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Assigned Categories</h2>
+                </div>
+                <div class="card-body">
+                    {% if assigned_categories %}
+                        <ul class="list-group">
+                            {% for category in assigned_categories %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <a href="{% url 'category_detail' pk=category.pk %}">{{ category.name }}</a>
+                                        <small class="text-muted ms-2">{{ category.path }}</small>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">This attribute isn't assigned to any categories.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Available Categories</h2>
+                </div>
+                <div class="card-body">
+                    {% if available_categories %}
+                        <ul class="list-group">
+                            {% for category in available_categories %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <a href="{% url 'category_detail' pk=category.pk %}">{{ category.name }}</a>
+                                        <small class="text-muted ms-2">{{ category.path }}</small>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">This attribute is assigned to all categories.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
