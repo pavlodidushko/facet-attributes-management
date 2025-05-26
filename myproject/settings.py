@@ -29,6 +29,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     'current-factual-bluegill.ngrok-free.app',
+    '35.188.123.207'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
