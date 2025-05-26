@@ -90,10 +90,10 @@ WSGI_APPLICATION = "myproject.wsgi.application"
 DATABASES = {
     "default": {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'facet_manager_db',
-        'USER': 'postgres',
-        'PASSWORD': '123456',
-        'HOST': 'localhost',
+        'NAME': 'facet_category_attributes',
+        'USER': 'facet_category',
+        'PASSWORD': '$Passion@123',
+        'HOST': '35.184.252.234',
         'PORT': '5432',
     }
 }
