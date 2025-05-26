@@ -5,8 +5,8 @@ from tqdm import tqdm
 from collections import defaultdict
 
 # Config
-input_csv = "/Users/iammahfuz/Downloads/vertexai_feed.csv"
-output_dir = "/Users/iammahfuz/Downloads/output_files"
+input_csv = "vertexai_feed.csv"
+output_dir = "output_files"
 chunksize = 10000  # Adjust based on your available memory
 
 # Prepare output directory
