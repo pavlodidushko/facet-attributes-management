@@ -34,6 +34,7 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     'https://current-factual-bluegill.ngrok-free.app',
+    "http://35.188.123.207"
 ]
 
 # Application definition
