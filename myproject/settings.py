@@ -27,14 +27,14 @@ CSRF_COOKIE_SECURE = False
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = [
-#     '127.0.0.1',
-#     'localhost',
-#     'current-factual-bluegill.ngrok-free.app',
-#     '35.188.123.207'
-# ]
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'current-factual-bluegill.ngrok-free.app',
+    '35.188.123.207'
+]
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
 
 CSRF_TRUSTED_ORIGINS = [
     'https://current-factual-bluegill.ngrok-free.app',
