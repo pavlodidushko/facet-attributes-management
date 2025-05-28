@@ -22,15 +22,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-4@#)8&!$@*x^g3v1z5j0b2q3c6r7f8w9z0y1x2z3a4b5c6d7e8'
 
+CSRF_COOKIE_SECURE = False
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
-    'current-factual-bluegill.ngrok-free.app',
-    '35.188.123.207'
-]
+# ALLOWED_HOSTS = [
+#     '127.0.0.1',
+#     'localhost',
+#     'current-factual-bluegill.ngrok-free.app',
+#     '35.188.123.207'
+# ]
+
+ALLOWED_HOSTS = []
 
 CSRF_TRUSTED_ORIGINS = [
     'https://current-factual-bluegill.ngrok-free.app',
