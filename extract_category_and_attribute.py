@@ -15,10 +15,10 @@ os.makedirs(output_dir, exist_ok=True)
 # Initialize dictionary for storing attribute keys per N-level category
 product_type_keys = defaultdict(set)
 
-# Function to sanitize filenames
+
 def sanitize_filename(name):
     # Replace special characters with underscores and trim excessive underscores
-    return re.sub(r'[^\w\-_.\&]', '_', name)
+    return re.sub(r'[^\w\-,.\&]', '', name)
 
 # Read CSV in chunks
 with pd.read_csv(input_csv, chunksize=chunksize) as reader:
