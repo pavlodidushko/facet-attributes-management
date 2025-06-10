@@ -181,7 +181,7 @@ def category_attributes(request, pk):
     # Get pagination params from query string, default to page 1, 10 per page
     attr_page = int(request.GET.get('attr_page', 1))
     avail_page = int(request.GET.get('avail_page', 1))
-    per_page = 9999999
+    per_page = int(request.GET.get('per_page', 10))
 
     # Assigned attributes pagination
     attributes_qs = category.attributes.values('id', 'name')
