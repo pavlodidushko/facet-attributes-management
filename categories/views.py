@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db import transaction
 from django.http import HttpResponseRedirect
+from django.core.paginator import Paginator
 
 from .models import Category, Attribute
 from .forms import CategoryForm, AttributeForm
@@ -121,10 +122,20 @@ class AttributeDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['assigned_categories'] = self.object.categories.all()
-        context['available_categories'] = Category.objects.exclude(
+        # Pagination for assigned_categories
+        assigned_list = self.object.categories.all()
+        assigned_paginator = Paginator(assigned_list, 10)  # 10 per page
+        assigned_page_number = self.request.GET.get('assigned_page')
+        context['assigned_categories'] = assigned_paginator.get_page(assigned_page_number)
+
+        # Pagination for available_categories
+        available_list = Category.objects.exclude(
             id__in=self.object.categories.values_list('id', flat=True)
         )
+        available_paginator = Paginator(available_list, 10)  # 10 per page
+        available_page_number = self.request.GET.get('available_page')
+        context['available_categories'] = available_paginator.get_page(available_page_number)
+
         return context
 
 

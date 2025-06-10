@@ -549,9 +549,45 @@
 
         });
 
-        // Load attributes for selected category
-        function loadCategoryAttributes(categoryId) {
-            $.get(`/api/categories/${categoryId}/attributes/`, function(data) {
+        function renderPagination(current, total, attrPage, availPage, perPage, type, categoryId) {
+            let html = '';
+            if (total <= 1) return html;
+
+            html += `<ul class="pagination pagination-sm">`;
+
+            html += `<li class="page-item${current === 1 ? ' disabled' : ''}">
+                <a class="page-link" href="#" data-attr-page="${type === 'attr' ? current - 1 : attrPage}" data-avail-page="${type === 'avail' ? current - 1 : availPage}" data-per-page="${perPage}">Previous</a>
+            </li>`;
+
+            let start = Math.max(1, current - 2);
+            let end = Math.min(total, current + 2);
+
+            if (start > 1) {
+                html += `<li class="page-item"><a class="page-link" href="#" data-attr-page="${type === 'attr' ? 1 : attrPage}" data-avail-page="${type === 'avail' ? 1 : availPage}" data-per-page="${perPage}">1</a></li>`;
+                if (start > 2) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+
+            for (let i = start; i <= end; i++) {
+                html += `<li class="page-item${i === current ? ' active' : ''}">
+                    <a class="page-link" href="#" data-attr-page="${type === 'attr' ? i : attrPage}" data-avail-page="${type === 'avail' ? i : availPage}" data-per-page="${perPage}">${i}</a>
+                </li>`;
+            }
+
+            if (end < total) {
+                if (end < total - 1) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                html += `<li class="page-item"><a class="page-link" href="#" data-attr-page="${type === 'attr' ? total : attrPage}" data-avail-page="${type === 'avail' ? total : availPage}" data-per-page="${perPage}">${total}</a></li>`;
+            }
+
+            html += `<li class="page-item${current === total ? ' disabled' : ''}">
+                <a class="page-link" href="#" data-attr-page="${type === 'attr' ? current + 1 : attrPage}" data-avail-page="${type === 'avail' ? current + 1 : availPage}" data-per-page="${perPage}">Next</a>
+            </li>`;
+
+            html += `</ul>`;
+            return html;
+        }
+
+        function loadCategoryAttributes(categoryId, attrPage = 1, availPage = 1, perPage = 10) {
+            $.get(`/api/categories/${categoryId}/attributes/?attr_page=${attrPage}&avail_page=${availPage}&per_page=${perPage}`, function(data) {
                 let html = `
                     <div class="attribute-management">
                         <h4>Assigned Attributes</h4>
@@ -567,6 +603,17 @@
                                     </div>
                                 `).join('')}
                             </div>
+                            <nav>
+                                ${renderPagination(
+                                    data.attributes_page,
+                                    data.attributes_num_pages,
+                                    data.attributes_page,
+                                    data.available_attributes_page,
+                                    perPage,
+                                    'attr',
+                                    categoryId
+                                )}
+                            </nav>
                         ` : '<div class="alert alert-info">No attributes assigned</div>'}
                         
                         <h4>Available Attributes</h4>
@@ -582,10 +629,31 @@
                                     </div>
                                 `).join('')}
                             </div>
+                            <nav>
+                                ${renderPagination(
+                                    data.available_attributes_page,
+                                    data.available_attributes_num_pages,
+                                    data.attributes_page,
+                                    data.available_attributes_page,
+                                    perPage,
+                                    'avail',
+                                    categoryId
+                                )}
+                            </nav>
                         ` : '<div class="alert alert-info">No available attributes</div>'}
                     </div>
                 `;
                 $('#attribute-management').html(html);
+
+                $('#attribute-management .pagination .page-link').click(function(e) {
+                    e.preventDefault();
+                    const newAttrPage = parseInt($(this).data('attr-page'));
+                    const newAvailPage = parseInt($(this).data('avail-page'));
+                    const newPerPage = parseInt($(this).data('per-page'));
+                    if (!isNaN(newAttrPage) && !isNaN(newAvailPage)) {
+                        loadCategoryAttributes(categoryId, newAttrPage, newAvailPage, newPerPage);
+                    }
+                });
             }).fail(function() {
                 $('#attribute-management').html(`
                     <div class="alert alert-danger">

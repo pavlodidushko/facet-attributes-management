@@ -15,6 +15,7 @@ class Category(MPTTModel):
     class Meta:
         verbose_name_plural = "categories"
         indexes = [
+            models.Index(fields=['name']),
             models.Index(fields=['path']),
             models.Index(fields=['parent']),
         ]

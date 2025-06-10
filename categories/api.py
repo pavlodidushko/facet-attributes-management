@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 from django.db import transaction
+from django.core.paginator import Paginator
 from .models import Category, Attribute
 
 
@@ -176,12 +177,32 @@ def category_tree(request):
 
 def category_attributes(request, pk):
     category = get_object_or_404(Category, pk=pk)
-    
+
+    # Get pagination params from query string, default to page 1, 10 per page
+    attr_page = int(request.GET.get('attr_page', 1))
+    avail_page = int(request.GET.get('avail_page', 1))
+    per_page = int(request.GET.get('per_page', 10))
+
+    # Assigned attributes pagination
+    attributes_qs = category.attributes.values('id', 'name')
+    attributes_paginator = Paginator(attributes_qs, per_page)
+    attributes_page = attributes_paginator.get_page(attr_page)
+
+    # Available attributes pagination
+    available_qs = Attribute.objects.exclude(categories=category).values('id', 'name')
+    available_paginator = Paginator(available_qs, per_page)
+    available_page = available_paginator.get_page(avail_page)
+
     return JsonResponse({
-        'attributes': list(category.attributes.values('id', 'name')),
-        'available_attributes': list(Attribute.objects.exclude(
-            categories=category
-        ).values('id', 'name'))
+        'attributes': list(attributes_page),
+        'attributes_page': attributes_page.number,
+        'attributes_num_pages': attributes_paginator.num_pages,
+        'attributes_count': attributes_paginator.count,
+
+        'available_attributes': list(available_page),
+        'available_attributes_page': available_page.number,
+        'available_attributes_num_pages': available_paginator.num_pages,
+        'available_attributes_count': available_paginator.count,
     })
 
 
@@ -249,7 +270,7 @@ def search_attributes(request):
     if not query:
         return JsonResponse({'success': False, 'error': 'Category name query is required'}, status=400)
 
-    attributes = Attribute.objects.filter(categories__path__icontains=query).distinct()
+    attributes = Attribute.objects.filter(categories__path=query).distinct()
 
     results = [
         {'id': attr.id, 'name': attr.name}

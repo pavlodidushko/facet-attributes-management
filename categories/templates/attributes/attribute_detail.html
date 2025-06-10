@@ -29,6 +29,16 @@
                     {% else %}
                         <p class="text-muted">This attribute isn't assigned to any categories.</p>
                     {% endif %}
+
+                    <div class="pagination">
+                        {% if assigned_categories.has_previous %}
+                            <a href="?assigned_page={{ assigned_categories.previous_page_number }}{% if available_categories.number %}&available_page={{ available_categories.number }}{% endif %}">&laquo; Previous</a>
+                        {% endif %}
+                        <span>Page {{ assigned_categories.number }} of {{ assigned_categories.paginator.num_pages }}</span>
+                        {% if assigned_categories.has_next %}
+                            <a href="?assigned_page={{ assigned_categories.next_page_number }}{% if available_categories.number %}&available_page={{ available_categories.number }}{% endif %}">Next &raquo;</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -53,6 +63,16 @@
                     {% else %}
                         <p class="text-muted">This attribute is assigned to all categories.</p>
                     {% endif %}
+
+                    <div class="pagination">
+                        {% if available_categories.has_previous %}
+                            <a href="?available_page={{ available_categories.previous_page_number }}{% if assigned_categories.number %}&assigned_page={{ assigned_categories.number }}{% endif %}">&laquo; Previous</a>
+                        {% endif %}
+                        <span>Page {{ available_categories.number }} of {{ available_categories.paginator.num_pages }}</span>
+                        {% if available_categories.has_next %}
+                            <a href="?available_page={{ available_categories.next_page_number }}{% if assigned_categories.number %}&assigned_page={{ assigned_categories.number }}{% endif %}">Next &raquo;</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
