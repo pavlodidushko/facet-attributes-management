@@ -336,7 +336,13 @@
             $('#category-tree').on('changed.jstree', function(e, data) {
                 if (data.selected.length) {
                     const categoryId = data.selected[0];
-                    loadCategoryAttributes(categoryId);
+                    
+                    const attrPage = parseInt($('#attribute-management .pagination .page-item.active .page-link[data-type="attr"]').data('attr-page')) || 1;
+                    const availPage = parseInt($('#attribute-management .pagination .page-item.active .page-link[data-type="avail"]').data('avail-page')) || 1;
+                    const perPage = parseInt($('#attribute-management .per-page-select').first().val()) || 10;
+                    const attrSearch = $('#assigned-search').val() || '';
+                    const availSearch = $('#available-search').val() || '';
+                    loadCategoryAttributes(categoryId, attrPage, availPage, perPage, attrSearch, availSearch);
                 }
             });
 
@@ -502,6 +508,8 @@
             $(document).on('click', '.remove-attribute-btn', function() {
                 const categoryId = $('#category-tree').jstree('get_selected')[0];
                 const attributeId = $(this).data('attribute-id');
+                console.log($('#attribute-management .pagination .page-item.active .page-link[data-type="attr"]').data('attr-page'));
+
                 if (confirm('Are you sure you want to remove this attribute from the selected category and all its subcategories?')) {
                     removeAttributeFromCategory(categoryId, attributeId);
                 }
@@ -553,44 +561,62 @@
             let html = '';
             if (total <= 1) return html;
 
-            html += `<ul class="pagination pagination-sm">`;
+            html += `<ul class="pagination pagination-sm align-items-center">`;
 
+            // Previous
             html += `<li class="page-item${current === 1 ? ' disabled' : ''}">
-                <a class="page-link" href="#" data-attr-page="${type === 'attr' ? current - 1 : attrPage}" data-avail-page="${type === 'avail' ? current - 1 : availPage}" data-per-page="${perPage}">Previous</a>
+                <a class="page-link" data-type="${type}" href="#" data-attr-page="${type === 'attr' ? current - 1 : attrPage}" data-avail-page="${type === 'avail' ? current - 1 : availPage}" data-per-page="${perPage}">Previous</a>
             </li>`;
 
+            // First page and ellipsis
             let start = Math.max(1, current - 2);
             let end = Math.min(total, current + 2);
 
             if (start > 1) {
-                html += `<li class="page-item"><a class="page-link" href="#" data-attr-page="${type === 'attr' ? 1 : attrPage}" data-avail-page="${type === 'avail' ? 1 : availPage}" data-per-page="${perPage}">1</a></li>`;
+                html += `<li class="page-item"><a class="page-link" data-type="${type}" href="#" data-attr-page="${type === 'attr' ? 1 : attrPage}" data-avail-page="${type === 'avail' ? 1 : availPage}" data-per-page="${perPage}">1</a></li>`;
                 if (start > 2) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
             }
 
+            // Page numbers
             for (let i = start; i <= end; i++) {
                 html += `<li class="page-item${i === current ? ' active' : ''}">
-                    <a class="page-link" href="#" data-attr-page="${type === 'attr' ? i : attrPage}" data-avail-page="${type === 'avail' ? i : availPage}" data-per-page="${perPage}">${i}</a>
+                    <a class="page-link" data-type="${type}" href="#" data-attr-page="${type === 'attr' ? i : attrPage}" data-avail-page="${type === 'avail' ? i : availPage}" data-per-page="${perPage}">${i}</a>
                 </li>`;
             }
 
+            // Last page and ellipsis
             if (end < total) {
                 if (end < total - 1) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-                html += `<li class="page-item"><a class="page-link" href="#" data-attr-page="${type === 'attr' ? total : attrPage}" data-avail-page="${type === 'avail' ? total : availPage}" data-per-page="${perPage}">${total}</a></li>`;
+                html += `<li class="page-item"><a class="page-link" data-type="${type}" href="#" data-attr-page="${type === 'attr' ? total : attrPage}" data-avail-page="${type === 'avail' ? total : availPage}" data-per-page="${perPage}">${total}</a></li>`;
             }
 
+            // Next
             html += `<li class="page-item${current === total ? ' disabled' : ''}">
-                <a class="page-link" href="#" data-attr-page="${type === 'attr' ? current + 1 : attrPage}" data-avail-page="${type === 'avail' ? current + 1 : availPage}" data-per-page="${perPage}">Next</a>
+                <a class="page-link" data-type="${type}" href="#" data-attr-page="${type === 'attr' ? current + 1 : attrPage}" data-avail-page="${type === 'avail' ? current + 1 : availPage}" data-per-page="${perPage}">Next</a>
             </li>`;
+
+            // Per page dropdown
+            html += `
+                <li class="page-item ms-2">
+                    <select class="form-select form-select-sm per-page-select" data-type="${type}" style="width:auto;display:inline-block;">
+                        ${[5, 10, 20, 50, 100].map(n => `<option value="${n}"${perPage == n ? ' selected' : ''}>${n} / page</option>`).join('')}
+                    </select>
+                </li>
+            `;
 
             html += `</ul>`;
             return html;
         }
 
-        function loadCategoryAttributes(categoryId, attrPage = 1, availPage = 1, perPage = 10) {
-            $.get(`/api/categories/${categoryId}/attributes/?attr_page=${attrPage}&avail_page=${availPage}&per_page=${perPage}`, function(data) {
+        function loadCategoryAttributes(categoryId, attrPage = 1, availPage = 1, perPage = 10, attrSearch = '', availSearch = '') {
+            $.get(`/api/categories/${categoryId}/attributes/?assigned_page=${attrPage}&available_page=${availPage}&assigned_per_page=${perPage}&available_per_page=${perPage}&assigned_search=${encodeURIComponent(attrSearch)}&available_search=${encodeURIComponent(availSearch)}`, function(data) {
                 let html = `
                     <div class="attribute-management">
                         <h4>Assigned Attributes</h4>
+                        <div class="d-flex mb-2">
+                            <input type="text" class="form-control form-control-sm me-2" id="assigned-search" placeholder="Search assigned..." value="${attrSearch || ''}" style="max-width:200px;">
+                            <button class="btn btn-outline-secondary btn-sm me-4" id="assigned-search-btn">Search</button>
+                        </div>
                         ${data.attributes.length ? `
                             <div class="list-group mb-4">
                                 ${data.attributes.map(attr => `
@@ -609,7 +635,7 @@
                                     data.attributes_num_pages,
                                     data.attributes_page,
                                     data.available_attributes_page,
-                                    perPage,
+                                    data.attributes_per_page,
                                     'attr',
                                     categoryId
                                 )}
@@ -617,6 +643,10 @@
                         ` : '<div class="alert alert-info">No attributes assigned</div>'}
                         
                         <h4>Available Attributes</h4>
+                        <div class="d-flex mb-2">
+                            <input type="text" class="form-control form-control-sm me-2" id="available-search" placeholder="Search available..." value="${availSearch || ''}" style="max-width:200px;">
+                            <button class="btn btn-outline-secondary btn-sm" id="available-search-btn">Search</button>
+                        </div>
                         ${data.available_attributes.length ? `
                             <div class="list-group">
                                 ${data.available_attributes.map(attr => `
@@ -635,7 +665,7 @@
                                     data.available_attributes_num_pages,
                                     data.attributes_page,
                                     data.available_attributes_page,
-                                    perPage,
+                                    data.available_attributes_per_page,
                                     'avail',
                                     categoryId
                                 )}
@@ -644,15 +674,70 @@
                     </div>
                 `;
                 $('#attribute-management').html(html);
-
+                
+                // Pagination click handlers
                 $('#attribute-management .pagination .page-link').click(function(e) {
                     e.preventDefault();
                     const newAttrPage = parseInt($(this).data('attr-page'));
                     const newAvailPage = parseInt($(this).data('avail-page'));
                     const newPerPage = parseInt($(this).data('per-page'));
                     if (!isNaN(newAttrPage) && !isNaN(newAvailPage)) {
-                        loadCategoryAttributes(categoryId, newAttrPage, newAvailPage, newPerPage);
+                        loadCategoryAttributes(
+                            categoryId,
+                            newAttrPage,
+                            newAvailPage,
+                            newPerPage,
+                            $('#assigned-search').val(),
+                            $('#available-search').val()
+                        );
                     }
+                });
+
+                // Per page dropdown handlers
+                $('#attribute-management .per-page-select').change(function() {
+                    const type = $(this).data('type');
+                    const perPage = parseInt($(this).val());
+                    if (type === 'attr') {
+                        loadCategoryAttributes(
+                            categoryId,
+                            1,
+                            data.available_attributes_page,
+                            perPage,
+                            $('#assigned-search').val(),
+                            $('#available-search').val()
+                        );
+                    } else {
+                        loadCategoryAttributes(
+                            categoryId,
+                            data.attributes_page,
+                            1,
+                            perPage,
+                            $('#assigned-search').val(),
+                            $('#available-search').val()
+                        );
+                    }
+                });
+
+                // Search handlers
+                $('#assigned-search-btn').click(function() {
+                    loadCategoryAttributes(
+                        categoryId,
+                        1,
+                        data.available_attributes_page,
+                        data.attributes_per_page,
+                        $('#assigned-search').val(),
+                        $('#available-search').val()
+                    );
+                });
+                $('#available-search-btn').click(function() {
+                    loadCategoryAttributes(
+                        categoryId,
+                        data.attributes_page,
+                        1,
+                        data.available_attributes_per_page,
+                        $('#assigned-search').val(),
+                        $('#available-search').val()
+                    );
                 });
             }).fail(function() {
                 $('#attribute-management').html(`
@@ -712,7 +797,14 @@
                 // Refresh attribute display for current category
                 const selected = $('#category-tree').jstree('get_selected');
                 if (selected.length && selected[0] == categoryId) {
-                    loadCategoryAttributes(categoryId);
+                    // Reload with current pagination/search
+                    
+                    const attrPage = parseInt($('#attribute-management .pagination .page-item.active .page-link[data-type="attr"]').data('attr-page')) || 1;
+                    const availPage = parseInt($('#attribute-management .pagination .page-item.active .page-link[data-type="avail"]').data('avail-page')) || 1;
+                    const perPage = parseInt($('#attribute-management .per-page-select').first().val()) || 10;
+                    const attrSearch = $('#assigned-search').val() || '';
+                    const availSearch = $('#available-search').val() || '';
+                    loadCategoryAttributes(categoryId, attrPage, availPage, perPage, attrSearch, availSearch);
                 }
             }
         }
@@ -751,7 +843,12 @@
         function refreshAttributeDisplay(categoryId) {
             const selected = $('#category-tree').jstree('get_selected');
             if (selected.length && selected[0] == categoryId) {
-                loadCategoryAttributes(categoryId);
+                const attrPage = parseInt($('#attribute-management .pagination .page-item.active .page-link[data-type="attr"]').data('attr-page')) || 1;
+                const availPage = parseInt($('#attribute-management .pagination .page-item.active .page-link[data-type="avail"]').data('avail-page')) || 1;
+                const perPage = parseInt($('#attribute-management .per-page-select').first().val()) || 10;
+                const attrSearch = $('#assigned-search').val() || '';
+                const availSearch = $('#available-search').val() || '';
+                loadCategoryAttributes(categoryId, attrPage, availPage, perPage, attrSearch, availSearch);
             }
         }
 

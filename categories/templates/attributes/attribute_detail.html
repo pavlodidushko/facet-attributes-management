@@ -15,6 +15,21 @@
                     <h2 class="h5 mb-0">Assigned Categories</h2>
                 </div>
                 <div class="card-body">
+                    <form method="get" class="row g-2 mb-3 align-items-center">
+                        <div class="col-auto">
+                            <input type="text" name="assigned_search" class="form-control" placeholder="Search assigned..." value="{{ request.GET.assigned_search }}">
+                        </div>
+                        <div class="col-auto">
+                            <select name="assigned_per_page" class="form-select" onchange="this.form.submit()">
+                                {% for n in 5 10 20 50 100 %}
+                                    <option value="{{ n }}" {% if request.GET.assigned_per_page|default:10|stringformat:"s" == n|stringformat:"s" %}selected{% endif %}>{{ n }} per page</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">Apply</button>
+                        </div>
+                    </form>
                     {% if assigned_categories %}
                         <ul class="list-group">
                             {% for category in assigned_categories %}
@@ -30,15 +45,26 @@
                         <p class="text-muted">This attribute isn't assigned to any categories.</p>
                     {% endif %}
 
-                    <div class="pagination">
+                    <form method="get" class="mt-2 d-flex align-items-center gap-2">
+                        {# Keep search and per_page in query #}
+                        <input type="hidden" name="assigned_search" value="{{ request.GET.assigned_search }}">
+                        <input type="hidden" name="assigned_per_page" value="{{ request.GET.assigned_per_page|default:10 }}">
+                        <input type="hidden" name="available_search" value="{{ request.GET.available_search }}">
+                        <input type="hidden" name="available_per_page" value="{{ request.GET.available_per_page|default:10 }}">
                         {% if assigned_categories.has_previous %}
-                            <a href="?assigned_page={{ assigned_categories.previous_page_number }}{% if available_categories.number %}&available_page={{ available_categories.number }}{% endif %}">&laquo; Previous</a>
+                            <button name="assigned_page" value="{{ assigned_categories.previous_page_number }}" class="btn btn-outline-secondary btn-sm">&laquo; Previous</button>
                         {% endif %}
-                        <span>Page {{ assigned_categories.number }} of {{ assigned_categories.paginator.num_pages }}</span>
+                        <span>Page</span>
+                        <select name="assigned_page" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                            {% for i in assigned_categories.paginator.page_range %}
+                                <option value="{{ i }}" {% if assigned_categories.number == i %}selected{% endif %}>{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                        <span>of {{ assigned_categories.paginator.num_pages }}</span>
                         {% if assigned_categories.has_next %}
-                            <a href="?assigned_page={{ assigned_categories.next_page_number }}{% if available_categories.number %}&available_page={{ available_categories.number }}{% endif %}">Next &raquo;</a>
+                            <button name="assigned_page" value="{{ assigned_categories.next_page_number }}" class="btn btn-outline-secondary btn-sm">Next &raquo;</button>
                         {% endif %}
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -49,6 +75,21 @@
                     <h2 class="h5 mb-0">Available Categories</h2>
                 </div>
                 <div class="card-body">
+                    <form method="get" class="row g-2 mb-3 align-items-center">
+                        <div class="col-auto">
+                            <input type="text" name="available_search" class="form-control" placeholder="Search available..." value="{{ request.GET.available_search }}">
+                        </div>
+                        <div class="col-auto">
+                            <select name="available_per_page" class="form-select" onchange="this.form.submit()">
+                                {% for n in 5 10 20 50 100 %}
+                                    <option value="{{ n }}" {% if request.GET.available_per_page|default:10|stringformat:"s" == n|stringformat:"s" %}selected{% endif %}>{{ n }} per page</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">Apply</button>
+                        </div>
+                    </form>
                     {% if available_categories %}
                         <ul class="list-group">
                             {% for category in available_categories %}
@@ -64,15 +105,25 @@
                         <p class="text-muted">This attribute is assigned to all categories.</p>
                     {% endif %}
 
-                    <div class="pagination">
+                    <form method="get" class="mt-2 d-flex align-items-center gap-2">
+                        <input type="hidden" name="available_search" value="{{ request.GET.available_search }}">
+                        <input type="hidden" name="available_per_page" value="{{ request.GET.available_per_page|default:10 }}">
+                        <input type="hidden" name="assigned_search" value="{{ request.GET.assigned_search }}">
+                        <input type="hidden" name="assigned_per_page" value="{{ request.GET.assigned_per_page|default:10 }}">
                         {% if available_categories.has_previous %}
-                            <a href="?available_page={{ available_categories.previous_page_number }}{% if assigned_categories.number %}&assigned_page={{ assigned_categories.number }}{% endif %}">&laquo; Previous</a>
+                            <button name="available_page" value="{{ available_categories.previous_page_number }}" class="btn btn-outline-secondary btn-sm">&laquo; Previous</button>
                         {% endif %}
-                        <span>Page {{ available_categories.number }} of {{ available_categories.paginator.num_pages }}</span>
+                        <span>Page</span>
+                        <select name="available_page" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                            {% for i in available_categories.paginator.page_range %}
+                                <option value="{{ i }}" {% if available_categories.number == i %}selected{% endif %}>{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                        <span>of {{ available_categories.paginator.num_pages }}</span>
                         {% if available_categories.has_next %}
-                            <a href="?available_page={{ available_categories.next_page_number }}{% if assigned_categories.number %}&assigned_page={{ assigned_categories.number }}{% endif %}">Next &raquo;</a>
+                            <button name="available_page" value="{{ available_categories.next_page_number }}" class="btn btn-outline-secondary btn-sm">Next &raquo;</button>
                         {% endif %}
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>

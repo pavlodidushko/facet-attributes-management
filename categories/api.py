@@ -179,18 +179,27 @@ def category_attributes(request, pk):
     category = get_object_or_404(Category, pk=pk)
 
     # Get pagination params from query string, default to page 1, 10 per page
-    attr_page = int(request.GET.get('attr_page', 1))
-    avail_page = int(request.GET.get('avail_page', 1))
-    per_page = int(request.GET.get('per_page', 10))
+    attr_page = int(request.GET.get('assigned_page', 1))
+    avail_page = int(request.GET.get('available_page', 1))
+    attr_per_page = int(request.GET.get('assigned_per_page', 10))
+    avail_per_page = int(request.GET.get('available_per_page', 10))
 
-    # Assigned attributes pagination
+    # Get search queries for both lists
+    attr_search = request.GET.get('assigned_search', '').strip()
+    avail_search = request.GET.get('available_search', '').strip()
+
+    # Assigned attributes queryset with search
     attributes_qs = category.attributes.values('id', 'name')
-    attributes_paginator = Paginator(attributes_qs, per_page)
+    if attr_search:
+        attributes_qs = attributes_qs.filter(name__icontains=attr_search)
+    attributes_paginator = Paginator(attributes_qs, attr_per_page)
     attributes_page = attributes_paginator.get_page(attr_page)
 
-    # Available attributes pagination
+    # Available attributes queryset with search
     available_qs = Attribute.objects.exclude(categories=category).values('id', 'name')
-    available_paginator = Paginator(available_qs, per_page)
+    if avail_search:
+        available_qs = available_qs.filter(name__icontains=avail_search)
+    available_paginator = Paginator(available_qs, avail_per_page)
     available_page = available_paginator.get_page(avail_page)
 
     return JsonResponse({
@@ -198,13 +207,14 @@ def category_attributes(request, pk):
         'attributes_page': attributes_page.number,
         'attributes_num_pages': attributes_paginator.num_pages,
         'attributes_count': attributes_paginator.count,
+        'attributes_per_page': attr_per_page,
 
         'available_attributes': list(available_page),
         'available_attributes_page': available_page.number,
         'available_attributes_num_pages': available_paginator.num_pages,
         'available_attributes_count': available_paginator.count,
+        'available_attributes_per_page': avail_per_page,
     })
-
 
 def category_add_attribute(request, category_pk, attribute_pk):
     category = get_object_or_404(Category, pk=category_pk)
